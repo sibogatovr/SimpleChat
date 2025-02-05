@@ -1,0 +1,101 @@
+﻿@{
+    ViewData["Title"] = "Чат";
+}
+
+<div class="container mt-4">
+    <h3 class="text-center">Чат</h3>
+    <div class="card">
+        <div class="card-body">
+            <div id="messages" class="mb-3" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></div>
+            <input type="text" id="messageInput" class="form-control mb-2" placeholder="Введите сообщение">
+            <div id="errorMessage" style="color: red; font-size: 0.9em; display: none;">Сообщение не может быть больше 128 символов!</div>
+            <button class="btn btn-primary w-100" id="sendBtn">Отправить</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+    window.onload = function() {
+        let orderNumber = 1;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        connection.on("ReceiveMessage", function (message) {
+            const msgContainer = document.getElementById("messages");
+            msgContainer.innerHTML += `
+                <div>
+                    <strong>Сообщение #${message.orderNumber}</strong> 
+                    (${new Date(message.timestamp).toLocaleString()}):
+                    <p>${message.text}</p>
+                </div>`;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        });
+
+        async function startConnection() {
+            try {
+                await connection.start();
+            } catch (err) {
+                console.error("SignalR connection error");
+                setTimeout(startConnection, 3000);
+            }
+        }
+
+        function sendMessage() {
+            const messageText = document.getElementById("messageInput").value.trim();
+
+            if (messageText.length === 0 || messageText.length > 128) {
+                showError(messageText.length > 128);
+                return;
+            }
+
+            const message = {
+                text: messageText,
+                orderNumber: orderNumber++
+            };
+
+            fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            })
+                .then(response => response.json())
+                .then(() => {
+                    document.getElementById("messageInput").value = "";
+                    hideError();
+                })
+                .catch(err => {
+                    console.error("Ошибка отправки сообщения");
+                    showError(true);
+                });
+        }
+
+        function showError(isError) {
+            document.getElementById("errorMessage").style.display = isError ? 'block' : 'none';
+        }
+
+        function hideError() {
+            showError(false);
+        }
+
+        document.getElementById("sendBtn").addEventListener("click", sendMessage);
+
+        document.getElementById("messageInput").addEventListener("input", function () {
+            showError(this.value.length > 128);
+        });
+
+        document.getElementById("messageInput").addEventListener("focus", hideError);
+
+        document.getElementById("messageInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        startConnection();
+    };
+</script>

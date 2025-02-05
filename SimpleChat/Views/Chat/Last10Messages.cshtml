@@ -1,0 +1,21 @@
+﻿@model List<Message>
+
+<div class="container mt-4">
+    <h3 class="text-center">Сообщения за последние 10 минут</h3>
+    <div class="card">
+        <div class="card-body">
+            <div id="messages" class="mb-3" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                @{
+                    foreach (var message in Model)
+                    {
+                <div>
+                    <strong>Сообщение # @message.OrderNumber</strong>
+                    (@message.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")):
+                    <p>@message.Text</p>
+                </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

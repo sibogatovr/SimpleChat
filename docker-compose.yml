@@ -8,3 +8,11 @@
       POSTGRES_PASSWORD: "1qaz@WSX"
     ports:
       - "5437:5432"
+  
+  seq:
+    image: datalust/seq:latest
+    container_name: chat-seq
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
