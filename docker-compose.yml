@@ -1,0 +1,10 @@
+﻿services:
+  postgres:
+    image: postgres:latest
+    container_name: chat-postgres-db
+    environment:
+      POSTGRES_DB: "development-chat-db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "1qaz@WSX"
+    ports:
+      - "5437:5432"
