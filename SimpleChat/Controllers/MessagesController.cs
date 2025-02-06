@@ -11,9 +11,10 @@ namespace SimpleChat.Controllers;
 [Route("api/messages")]
 public class MessagesController(
     IMessageService messageService,
-    IHubContext<ChatHub, IChatClient> hubContext,
-    ILogger<MessagesController> logger) : Controller
+    IHubContext<ChatHub, IChatClient> hubContext) : Controller
 {
+    private readonly ILogger<MessagesController> _logger = LogHost.GetLogger<MessagesController>();
+    
     /// <summary>
     /// Sends a message and broadcasts it to all clients.
     /// </summary>
@@ -42,12 +43,12 @@ public class MessagesController(
                 hubContext.Clients.All.ReceiveMessage(message)
             );
 
-            logger.LogInformation("Message with order number {OrderNumber} sent successfully.", messageDto.OrderNumber);
+            _logger.LogInformation("Message with order number {OrderNumber} sent successfully.", messageDto.OrderNumber);
             return Ok(new { message.Id, message.Text, message.Timestamp });
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error occurred while sending the message.");
+            _logger.LogError(e, "Error occurred while sending the message.");
             return StatusCode(500, "An error occurred on the server.");
         }
     }
@@ -75,7 +76,7 @@ public class MessagesController(
             
             var messages = await messageService.GetMessagesFromDatabaseAsync(fromDate, toDate);
 
-            logger.LogInformation("Successfully fetched {MessageCount} messages between {FromDate} and {ToDate}.", messages.Count, from, to);
+            _logger.LogInformation("Successfully fetched {MessageCount} messages between {FromDate} and {ToDate}.", messages.Count, from, to);
             return Ok(messages);
             
             bool TryParseDate(string dateString, out DateTime date) =>
@@ -83,7 +84,7 @@ public class MessagesController(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error occurred while sending the message.");
+            _logger.LogError(e, "Error occurred while sending the message.");
             return StatusCode(500, "An error occurred on the server.");
         }
        

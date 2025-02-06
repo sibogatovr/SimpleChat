@@ -2,15 +2,14 @@
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SimpleChat/SimpleChat.csproj", "SimpleChat/"]
-RUN dotnet restore "SimpleChat/SimpleChat.csproj"
+COPY ["SimpleChat.csproj", "./"]
+RUN dotnet restore "SimpleChat.csproj"
 COPY . .
-WORKDIR "/src/SimpleChat"
+WORKDIR "/src/"
 RUN dotnet build "SimpleChat.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

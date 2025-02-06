@@ -1,24 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SimpleChat.Data;
-using SimpleChat.Models;
+﻿using SimpleChat.Models;
+using SimpleChat.Services.Repositories;
 
 namespace SimpleChat.Services;
 
 public class MessageService(
-    ApplicationDbContext dbContext,
-    ILogger<MessageService> logger) : IMessageService
+    IMessageRepository messageRepository) : IMessageService
 {
+    private readonly ILogger<MessageService> _logger = LogHost.GetLogger<MessageService>();
+    
     public async Task AddMessageToDatabaseAsync(Message message)
     {
         try
         {
-            dbContext.Messages.Add(message);
-            await dbContext.SaveChangesAsync();
-            logger.LogInformation("Message with ID {MessageId} successfully added to the database.", message.Id);
+            await messageRepository.AddMessageAsync(message);
+            _logger.LogInformation("Message with ID {MessageId} successfully added to the database.", message.Id);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding the message to the database.");
+            _logger.LogError(ex, "An error occurred while adding the message to the database.");
             throw;
         }
     }
@@ -27,24 +26,14 @@ public class MessageService(
     {
         try
         {
-            fromDate = ConvertToUtcIfNeeded(fromDate);
-            toDate = ConvertToUtcIfNeeded(toDate);
-
-            var messages = await dbContext.Messages
-                .Where(m => m.Timestamp >= fromDate && m.Timestamp <= toDate)
-                .OrderBy(m => m.Timestamp)
-                .ToListAsync();
-
-            logger.LogInformation("Retrieved {MessageCount} messages between {FromDate} and {ToDate}.", messages.Count,
-                fromDate, toDate);
+            var messages = await messageRepository.GetMessagesAsync(fromDate, toDate);
+            _logger.LogInformation("Retrieved {MessageCount} messages between {FromDate} and {ToDate}.", 
+                messages.Count, fromDate, toDate);
             return messages;
-            
-            DateTime ConvertToUtcIfNeeded(DateTime date) =>
-                date.Kind == DateTimeKind.Utc ? date : date.ToUniversalTime();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while retrieving messages from the database.");
+            _logger.LogError(ex, "An error occurred while retrieving messages from the database.");
             throw;
         }
     }
